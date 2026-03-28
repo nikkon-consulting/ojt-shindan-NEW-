@@ -378,7 +378,7 @@ function sendData(){
   fd.append('maxGapCategory',maxCats);
   fd.append('confidence_teach',confidence[9]||'');
   fd.append('confidence_learn',confidence[10]||'');
-  fetch(GAS_URL,{method:'POST',body:fd}).catch(function(){});
+  fetch(GAS_URL,{method:'POST',body:fd,mode:'no-cors'}).catch(function(){});
 }
 
 function restart(){role=null;currentQ=0;answers={};confidence={};confStep=0;showScreen('start')}
