@@ -284,26 +284,27 @@ function renderResult(){
   h+='<div style="padding:12px 18px;margin-bottom:20px;font-size:13px;line-height:1.7;color:#555;background:#FAFBFC;border-radius:12px">💡 '+comments.advice+'</div>';
 
   // Confidence visual
-  if(confTeach==='no'||confLearn==='no'){
+if((role==='hr'&&(confTeach==='no'||confLearn==='no'))||(role==='trainer'&&confLearn==='no')){
     h+='<div style="padding:16px;background:#FFF8E1;border-radius:12px;margin-bottom:20px">';
-    h+='<div style="font-size:13px;font-weight:700;color:#E08A00;margin-bottom:12px">現場の実態をどこまで把握できていますか？</div>';
-    h+='<div style="display:flex;gap:10px">';
-    // Teach
-    var tBg=confTeach==='no'?'#FFF0E0':'#E8F8F0';
-    var tIcon=confTeach==='no'?'🔍':'✅';
-    var tColor=confTeach==='no'?'#C06000':'#1B8C4F';
-    var tText=confTeach==='no'?'把握できていない':'把握できている';
-    h+='<div class="conf-box" style="background:'+tBg+'"><div style="font-size:22px;margin-bottom:4px">'+tIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教える側の実態</div><div style="font-size:11px;color:'+tColor+';font-weight:600">'+tText+'</div></div>';
-    // Learn
-    var lBg=confLearn==='no'?'#FFF0E0':'#E8F8F0';
-    var lIcon=confLearn==='no'?'🔍':'✅';
-    var lColor=confLearn==='no'?'#C06000':'#1B8C4F';
-    var lText=confLearn==='no'?'把握できていない':'把握できている';
-    h+='<div class="conf-box" style="background:'+lBg+'"><div style="font-size:22px;margin-bottom:4px">'+lIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教わる側の実態</div><div style="font-size:11px;color:'+lColor+';font-weight:600">'+lText+'</div></div>';
-    h+='</div>';
-    // Summary
-    var summary=(confTeach==='no'&&confLearn==='no')?'両方とも実態を確認できていない状態です。まず現場の声を聞くことから始めましょう。':confTeach==='no'?'教える側の実態確認が優先です。指導場面を直接観察してみましょう。':'教わる側の実態確認が優先です。新人・若手の声を直接聞いてみましょう。';
-    h+='<div style="font-size:12px;color:#996300;margin-top:10px;line-height:1.6;text-align:center">'+summary+'</div>';
+    if(role==='trainer'){
+      h+='<div style="font-size:13px;font-weight:700;color:#E08A00;margin-bottom:12px">教わる側の実態を把握できていますか？</div>';
+      h+='<div style="padding:14px;border-radius:10px;background:#FFF0E0;text-align:center">';
+      h+='<div style="font-size:22px;margin-bottom:4px">🔍</div>';
+      h+='<div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教わる側の実態</div>';
+      h+='<div style="font-size:11px;color:#C06000;font-weight:600">把握できていない</div>';
+      h+='</div>';
+      h+='<div style="font-size:12px;color:#996300;margin-top:10px;line-height:1.6;text-align:center">指導している新人・若手がどう感じているか、直接聞いてみましょう。</div>';
+    }else{
+      h+='<div style="font-size:13px;font-weight:700;color:#E08A00;margin-bottom:12px">現場の実態をどこまで把握できていますか？</div>';
+      h+='<div style="display:flex;gap:10px">';
+      var tBg=confTeach==='no'?'#FFF0E0':'#E8F8F0';var tIcon=confTeach==='no'?'🔍':'✅';var tColor=confTeach==='no'?'#C06000':'#1B8C4F';var tText=confTeach==='no'?'把握できていない':'把握できている';
+      h+='<div class="conf-box" style="background:'+tBg+'"><div style="font-size:22px;margin-bottom:4px">'+tIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教える側の実態</div><div style="font-size:11px;color:'+tColor+';font-weight:600">'+tText+'</div></div>';
+      var lBg=confLearn==='no'?'#FFF0E0':'#E8F8F0';var lIcon=confLearn==='no'?'🔍':'✅';var lColor=confLearn==='no'?'#C06000':'#1B8C4F';var lText=confLearn==='no'?'把握できていない':'把握できている';
+      h+='<div class="conf-box" style="background:'+lBg+'"><div style="font-size:22px;margin-bottom:4px">'+lIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教わる側の実態</div><div style="font-size:11px;color:'+lColor+';font-weight:600">'+lText+'</div></div>';
+      h+='</div>';
+      var summary=(confTeach==='no'&&confLearn==='no')?'両方とも実態を確認できていない状態です。まず現場の声を聞くことから始めましょう。':confTeach==='no'?'教える側の実態確認が優先です。指導場面を直接観察してみましょう。':'教わる側の実態確認が優先です。新人・若手の声を直接聞いてみましょう。';
+      h+='<div style="font-size:12px;color:#996300;margin-top:10px;line-height:1.6;text-align:center">'+summary+'</div>';
+    }
     h+='</div>';
   }
 
