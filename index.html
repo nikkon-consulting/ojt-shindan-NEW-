@@ -370,7 +370,7 @@ function sendData(){
   var maxAbs=Math.max.apply(null,gaps.map(function(g){return g.abs}));
   var maxCats=maxAbs===0?'none':gaps.filter(function(g){return g.abs===maxAbs}).map(function(g){return g.cat}).join(',');
   var fd=new URLSearchParams();
-  fd.append('timestamp',new Date().toISOString());
+  fd.append('+encodeURIComponent(new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'}))
   fd.append('role',role);
   fd.append('answers',QUESTIONS.map(function(q){return answers[q.id]||0}).join(','));
   fd.append('group1Score',g1);
