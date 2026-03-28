@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OJT簡易診断 集計ダッシュボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#F5F7FA;font-family:'Noto Sans JP',sans-serif;padding:32px 20px;color:#333}
+.dashboard{max-width:800px;margin:0 auto}
+.header{text-align:center;margin-bottom:32px}
+.header h1{font-size:22px;font-weight:800;color:#1A1D26;margin-bottom:6px}
+.header p{font-size:13px;color:#8B8FA3}
+.status-bar{display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:28px;font-size:13px;color:#8B8FA3}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#27AE60;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.section{margin-bottom:32px}
+.section-title{font-size:16px;font-weight:700;color:#1A1D26;margin-bottom:6px}
+.section-sub{font-size:13px;color:#8B8FA3;margin-bottom:16px;line-height:1.5}
+.card{background:#fff;border-radius:16px;box-shadow:0 2px 20px rgba(0,0,0,.04);padding:24px;margin-bottom:16px}
+.chart-row{display:flex;gap:16px}
+.chart-col{flex:1;text-align:center}
+.chart-label{font-size:14px;font-weight:600;color:#333;margin-bottom:12px}
+.chart-wrap{position:relative;width:180px;height:180px;margin:0 auto}
+.chart-wrap-sm{position:relative;width:140px;height:140px;margin:0 auto}
+.legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px;font-size:12px;color:#555}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.highlight-box{background:#FAFBFC;border-radius:12px;padding:16px;text-align:center;margin-top:16px}
+.highlight-label{font-size:13px;color:#8B8FA3;margin-bottom:4px}
+.highlight-val{font-size:18px;font-weight:700}
+.highlight-note{font-size:12px;color:#666;margin-top:6px;line-height:1.6}
+.no-data{text-align:center;padding:60px 20px;color:#8B8FA3;font-size:15px}
+.count-badge{display:inline-block;background:#E8F8F0;color:#27AE60;font-size:13px;font-weight:600;padding:4px 14px;border-radius:20px}
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="header">
+    <h1>📊 OJT簡易診断 集計結果</h1>
+    <p>本日の参加者の診断結果をリアルタイムで集計しています</p>
+  </div>
+  <div class="status-bar">
+    <span class="status-dot"></span>
+    <span id="status-text">データ取得中...</span>
+    <span class="count-badge" id="count-badge">回答数: -</span>
+  </div>
+
+  <div id="main-content">
+    <div class="no-data" id="no-data">まだ回答データがありません。<br>参加者が診断を完了すると、ここに結果が表示されます。</div>
+  </div>
+
+  <div id="charts-area" style="display:none">
+    <!-- 4タイプ分布 -->
+    <div class="section">
+      <div class="section-title">診断タイプの分布</div>
+      <div class="section-sub">参加者がどのタイプに分類されたかの割合です。</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+          <div class="chart-wrap" style="flex-shrink:0">
+            <canvas id="typeChart"></canvas>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div class="legend" id="type-legend" style="flex-direction:column;align-items:flex-start;gap:8px"></div>
+          </div>
+        </div>
+        <div class="highlight-box" id="type-highlight"></div>
+      </div>
+    </div>
+
+    <!-- 確信度 -->
+    <div class="section">
+      <div class="section-title">現場の実態をどの程度把握できていますか？</div>
+      <div class="section-sub">診断の最後にお聞きした「実態の把握度」の集計結果です。</div>
+      <div class="card">
+        <div class="chart-row">
+          <div class="chart-col">
+            <div class="chart-label">教える側の実態</div>
+            <div class="chart-wrap-sm"><canvas id="confTeachChart"></canvas></div>
+            <div class="legend" id="conf-teach-legend" style="margin-top:10px"></div>
+          </div>
+          <div class="chart-col">
+            <div class="chart-label">教わる側の実態</div>
+            <div class="chart-wrap-sm"><canvas id="confLearnChart"></canvas></div>
+            <div class="legend" id="conf-learn-legend" style="margin-top:10px"></div>
+          </div>
+        </div>
+        <div class="highlight-box" id="conf-highlight"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// === CONFIG ===
+// ↓ index.htmlと同じGAS URLを貼ってください ↓
+var GAS_URL='https://script.google.com/macros/s/AKfycbxKXhCFj_DNflowSYcA4mLjn_jykY73mlEp4Bmr9y51Z-WEGvncYEV9XJr0O/exec';
+var REFRESH_INTERVAL=15000; // 15秒ごとに自動更新
+
+// === STATE ===
+var typeChartInstance=null;
+var confTeachChartInstance=null;
+var confLearnChartInstance=null;
+
+// === DATA FETCH (JSONP) ===
+function fetchData(){
+  var existing=document.getElementById('jsonp-script');
+  if(existing)existing.remove();
+  var s=document.createElement('script');
+  s.id='jsonp-script';
+  s.src=GAS_URL+'?action=getData&t='+Date.now();
+  s.onerror=function(){
+    document.getElementById('status-text').textContent='データ取得に失敗しました';
+  };
+  document.head.appendChild(s);
+}
+
+// JSONP callback
+function callback(response){
+  if(response.status==='success'){
+    renderDashboard(response.data);
+  }
+}
+
+// === RENDER ===
+function renderDashboard(data){
+  if(!data||data.length===0){
+    document.getElementById('no-data').style.display='block';
+    document.getElementById('charts-area').style.display='none';
+    document.getElementById('count-badge').textContent='回答数: 0';
+    document.getElementById('status-text').textContent='データなし — 自動更新中';
+    return;
+  }
+  document.getElementById('no-data').style.display='none';
+  document.getElementById('charts-area').style.display='block';
+  document.getElementById('count-badge').textContent='回答数: '+data.length;
+  document.getElementById('status-text').textContent='最終更新: '+new Date().toLocaleTimeString('ja-JP');
+
+  // --- 4タイプ集計 ---
+  var typeCounts={good:0,gap:0,self:0,rebuild:0};
+  var typeNames={'好循環型':'good','伝達ギャップ型':'gap','自走型':'self','立て直し型':'rebuild'};
+  data.forEach(function(r){
+    var key=typeNames[r.resultType];
+    if(key)typeCounts[key]++;
+  });
+  var total=data.length;
+  var typeData=[
+    {key:'good',name:'好循環型',count:typeCounts.good,color:'#27AE60'},
+    {key:'gap',name:'伝達ギャップ型',count:typeCounts.gap,color:'#F2994A'},
+    {key:'self',name:'自走型',count:typeCounts.self,color:'#2D9CDB'},
+    {key:'rebuild',name:'立て直し型',count:typeCounts.rebuild,color:'#EB5757'}
+  ];
+
+  // Chart
+  var typeValues=typeData.map(function(d){return d.count});
+  var typeColors=typeData.map(function(d){return d.color});
+  if(typeChartInstance){typeChartInstance.destroy()}
+  typeChartInstance=new Chart(document.getElementById('typeChart'),{
+    type:'doughnut',
+    data:{labels:typeData.map(function(d){return d.name}),datasets:[{data:typeValues,backgroundColor:typeColors,borderColor:'#fff',borderWidth:3}]},
+    options:{responsive:false,cutout:'55%',plugins:{legend:{display:false},tooltip:{enabled:true}}}
+  });
+
+  // Legend
+  var legendHtml='';
+  typeData.forEach(function(d){
+    var pct=total>0?Math.round(d.count/total*100):0;
+    legendHtml+='<span class="legend-item"><span class="legend-dot" style="background:'+d.color+'"></span>'+d.name+' '+pct+'%</span>';
+  });
+  document.getElementById('type-legend').innerHTML=legendHtml;
+
+  // Highlight: most common type
+  var maxType=typeData.reduce(function(a,b){return a.count>=b.count?a:b});
+  var maxPct=total>0?Math.round(maxType.count/total*100):0;
+  document.getElementById('type-highlight').innerHTML=
+    '<div class="highlight-label">最も多いタイプ</div>'+
+    '<div class="highlight-val" style="color:'+maxType.color+'">'+maxType.name+'（'+maxPct+'%）</div>'+
+    '<div class="highlight-note">'+getTypeHighlightNote(maxType.key)+'</div>';
+
+  // --- 確信度集計 ---
+  var confTeachYes=0,confTeachNo=0,confLearnYes=0,confLearnNo=0;
+  data.forEach(function(r){
+    if(r.confidence_teach==='yes')confTeachYes++;
+    else if(r.confidence_teach==='no')confTeachNo++;
+    if(r.confidence_learn==='yes')confLearnYes++;
+    else if(r.confidence_learn==='no')confLearnNo++;
+  });
+  var confTeachTotal=confTeachYes+confTeachNo;
+  var confLearnTotal=confLearnYes+confLearnNo;
+
+  // Teach chart
+  if(confTeachChartInstance){confTeachChartInstance.destroy()}
+  confTeachChartInstance=new Chart(document.getElementById('confTeachChart'),{
+    type:'doughnut',
+    data:{labels:['把握できている','あまり把握できていない'],datasets:[{data:[confTeachYes,confTeachNo],backgroundColor:['#27AE60','#E8EAF0'],borderColor:'#fff',borderWidth:3}]},
+    options:{responsive:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{enabled:true}}}
+  });
+  var tYesPct=confTeachTotal>0?Math.round(confTeachYes/confTeachTotal*100):0;
+  var tNoPct=confTeachTotal>0?Math.round(confTeachNo/confTeachTotal*100):0;
+  document.getElementById('conf-teach-legend').innerHTML=
+    '<span class="legend-item"><span class="legend-dot" style="background:#27AE60"></span>把握 '+tYesPct+'%</span>'+
+    '<span class="legend-item"><span class="legend-dot" style="background:#E8EAF0"></span>未把握 '+tNoPct+'%</span>';
+
+  // Learn chart
+  if(confLearnChartInstance){confLearnChartInstance.destroy()}
+  confLearnChartInstance=new Chart(document.getElementById('confLearnChart'),{
+    type:'doughnut',
+    data:{labels:['把握できている','あまり把握できていない'],datasets:[{data:[confLearnYes,confLearnNo],backgroundColor:['#27AE60','#E8EAF0'],borderColor:'#fff',borderWidth:3}]},
+    options:{responsive:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{enabled:true}}}
+  });
+  var lYesPct=confLearnTotal>0?Math.round(confLearnYes/confLearnTotal*100):0;
+  var lNoPct=confLearnTotal>0?Math.round(confLearnNo/confLearnTotal*100):0;
+  document.getElementById('conf-learn-legend').innerHTML=
+    '<span class="legend-item"><span class="legend-dot" style="background:#27AE60"></span>把握 '+lYesPct+'%</span>'+
+    '<span class="legend-item"><span class="legend-dot" style="background:#E8EAF0"></span>未把握 '+lNoPct+'%</span>';
+
+  // Confidence highlight
+  var confMsg='';
+  if(lNoPct>=50){
+    confMsg='参加者の'+lNoPct+'%が「教わる側の実態を把握できていない」と回答しています。教わる側の声を聞くことが改善の第一歩になります。';
+  }else if(tNoPct>=50){
+    confMsg='参加者の'+tNoPct+'%が「教える側の実態を把握できていない」と回答しています。現場の指導場面を確認してみましょう。';
+  }else{
+    confMsg='多くの参加者が現場の実態を把握できていると回答しています。その認識が正しいか、教わる側に直接確認してみることをお勧めします。';
+  }
+  document.getElementById('conf-highlight').innerHTML=
+    '<div class="highlight-label">注目ポイント</div>'+
+    '<div class="highlight-val" style="font-size:15px">'+confMsg+'</div>';
+}
+
+function getTypeHighlightNote(key){
+  switch(key){
+    case'good':return'教える側の指導が機能し、教わる側も成長を実感できていると認識している方が多い結果でした。';
+    case'gap':return'教える側は指導しているのに、教わる側に伝わっていないと感じている方が最も多い結果でした。';
+    case'self':return'教わる側は成長できているが、教える側の指導が不足していると感じている方が多い結果でした。';
+    case'rebuild':return'教える側・教わる側の両方に課題を感じている方が多い結果でした。';
+    default:return'';
+  }
+}
+
+// === AUTO REFRESH ===
+fetchData();
+setInterval(fetchData,REFRESH_INTERVAL);
+</script>
+</body>
+</html>
