@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OJT簡易診断</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#F5F7FA;font-family:'Noto Sans JP',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px 16px;position:relative;overflow-x:hidden}
+.bg-dot{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.card{background:#fff;border-radius:20px;box-shadow:0 4px 40px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);padding:36px 28px;max-width:520px;width:100%;margin:0 auto;position:relative;z-index:1}
+.screen{display:none;width:100%;max-width:520px}
+.screen.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.progress-track{height:5px;background:#F0F1F4;border-radius:3px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#2D9CDB,#27AE60);border-radius:3px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.btn{display:block;width:100%;padding:16px;font-size:15px;font-weight:600;border:2px solid #E8EAF0;border-radius:12px;background:#FAFBFC;color:#555;cursor:pointer;transition:all .2s;text-align:center;font-family:inherit}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:linear-gradient(135deg,#2D9CDB,#27AE60);color:#fff;border:none;font-size:16px;font-weight:700;box-shadow:0 4px 16px rgba(45,156,219,.25)}
+.btn-ghost{background:transparent;border:1px solid #E8EAF0;color:#8B8FA3;font-size:13px;padding:10px;margin-top:16px}
+.role-btn{display:flex;align-items:center;gap:14px;padding:18px 20px;text-align:left;border-radius:14px}
+.role-btn:hover{border-color:#2D9CDB;background:#F0F8FF}
+.choice-btn{margin-bottom:10px}
+.choice-btn:last-child{margin-bottom:0}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;color:#fff}
+.q-text{font-size:16px;font-weight:600;line-height:1.8;color:#1A1D26;min-height:100px;margin-bottom:28px}
+.result-scores{display:flex;gap:12px;margin-bottom:20px}
+.score-card{flex:1;border-radius:12px;padding:14px 12px;text-align:center}
+.gap-section{margin-top:24px}
+.gap-cat{margin-bottom:14px}
+.gap-bar-track{flex:1;height:10px;background:#F0F1F4;border-radius:5px;overflow:hidden}
+.gap-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.aruaru-card{padding:14px 16px;border-radius:12px;border-left:4px solid;margin-top:10px}
+.conf-box{flex:1;padding:12px;border-radius:10px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+
+<!-- Screen: Start -->
+<div id="screen-start" class="screen active">
+<div class="card" style="text-align:center">
+  <div style="font-size:40px;margin-bottom:12px">📋</div>
+  <h1 style="font-size:22px;font-weight:800;color:#1A1D26;margin-bottom:6px;letter-spacing:-.02em">OJT簡易診断</h1>
+  <div style="font-size:13px;color:#8B8FA3;margin-bottom:24px">全9〜10問 ・ 所要時間 約2分</div>
+  <p style="font-size:14px;color:#555;line-height:1.8;margin-bottom:28px">あなたの職場のOJTについて診断します。<br>教える側の指導と教わる側の成長実感を<br>2つの軸で可視化します。</p>
+  <button class="btn btn-primary" onclick="showScreen('role')">診断をはじめる</button>
+</div>
+</div>
+
+<!-- Screen: Role -->
+<div id="screen-role" class="screen">
+<div class="card">
+  <div style="text-align:center;margin-bottom:24px">
+    <h2 style="font-size:18px;font-weight:700;color:#1A1D26;margin-bottom:8px">あなたの立場を教えてください</h2>
+    <p style="font-size:13px;color:#8B8FA3">回答結果の分析に活用します</p>
+  </div>
+  <button class="btn role-btn" onclick="selectRole('hr')" style="margin-bottom:12px">
+    <span style="font-size:28px">🏢</span>
+    <div><div style="font-size:15px;font-weight:700;color:#1A1D26">人事・教育部門の担当者</div><div style="font-size:12px;color:#8B8FA3;margin-top:2px">自社のOJT全体を管理・企画する立場</div></div>
+  </button>
+  <button class="btn role-btn" onclick="selectRole('trainer')">
+    <span style="font-size:28px">🧑‍🏫</span>
+    <div><div style="font-size:15px;font-weight:700;color:#1A1D26">OJTトレーナー・現場の指導担当者</div><div style="font-size:12px;color:#8B8FA3;margin-top:2px">自ら新人・若手を指導する立場</div></div>
+  </button>
+  <div style="font-size:12px;color:#B0B5C3;text-align:center;margin-top:16px;line-height:1.6">人事の方は自社の現場を想像して、トレーナーの方はご自身の指導を振り返りながらお答えください。</div>
+</div>
+</div>
+
+<!-- Screen: Question -->
+<div id="screen-question" class="screen">
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <span id="q-counter" style="font-size:13px;color:#8B8FA3;font-weight:500"></span>
+    <span id="q-pct" style="font-size:12px;color:#B0B5C3"></span>
+  </div>
+  <div class="progress-track"><div id="q-progress" class="progress-fill" style="width:12.5%"></div></div>
+  <div style="margin:20px 0 8px"><span id="q-group-pill" class="pill"></span></div>
+  <div id="q-text" class="q-text"></div>
+  <div id="q-choices"></div>
+  <button id="q-back" class="btn btn-ghost" onclick="goBack()" style="display:none">← 前の質問に戻る</button>
+</div>
+</div>
+
+<!-- Screen: Confidence -->
+<div id="screen-confidence" class="screen">
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+    <span id="c-counter" style="font-size:13px;color:#8B8FA3;font-weight:500"></span>
+    <span id="c-pct" style="font-size:12px;color:#B0B5C3"></span>
+  </div>
+  <div class="progress-track"><div id="c-progress" class="progress-fill"></div></div>
+  <div style="text-align:center;margin:20px 0 8px"><span class="pill" style="background:#9B51E0">最後の確認</span></div>
+  <div id="c-text" class="q-text" style="text-align:center"></div>
+  <div id="c-choices"></div>
+</div>
+</div>
+
+<!-- Screen: Result -->
+<div id="screen-result" class="screen">
+<div class="card" id="result-card"></div>
+</div>
+
+<script>
+// === DATA ===
+var GAS_URL='https://script.google.com/macros/s/AKfycbzjbOEFlnpVJgO9xtUlJTAsNQf-dPITHCbcv5VnlFman5klyEbiJKcnMJidMejGvZM/exec';
+
+var QUESTIONS=[
+  {id:1,group:1,cat:'A',catLabel:'伝える',text:'OJTトレーナーは、作業手順だけでなく、その仕事が誰のために・何のために必要なのかまで伝えている'},
+  {id:2,group:1,cat:'B',catLabel:'引き出す',text:'OJTトレーナーは、新人が慣れてきた業務については、細かく指示するのではなく、本人の判断に任せる場面をつくっている'},
+  {id:3,group:1,cat:'C',catLabel:'FB',text:'OJTトレーナーは、新人の良い点と改善点を、具体的な行動レベルで伝えている'},
+  {id:4,group:1,cat:'D',catLabel:'関係構築',text:'OJTトレーナーは、新人がミスや失敗をしたとき、原因を一緒に振り返る時間を取っている'},
+  {id:5,group:2,cat:'A',catLabel:'伝える',text:'新人・若手は、自分が任された仕事の目的や背景を理解した上で取り組んでいる'},
+  {id:6,group:2,cat:'B',catLabel:'引き出す',text:'新人・若手は、慣れてきた業務について、指示を待つのではなく自分で段取りを考えて動いている'},
+  {id:7,group:2,cat:'C',catLabel:'FB',text:'新人・若手は、自分の良い点と改善点を具体的にわかっている'},
+  {id:8,group:2,cat:'D',catLabel:'関係構築',text:'新人・若手は、ミスをしたとき、指摘されるだけで終わらず、「次にどうするか」を一緒に考えてもらえている'}
+];
+
+var CONF_QUESTIONS=[
+  {id:9,text:'教える側（OJTトレーナー）の日々の指導の実態を、十分に把握できていると感じますか？'},
+  {id:10,text:'教わる側（新人・若手）が日々どう感じているかを、十分に把握できていると感じますか？'}
+];
+
+var ANSWER_OPTS=[{label:'そう思う',score:5,color:'#2D9CDB'},{label:'どちらとも言えない',score:3,color:'#8B8FA3'},{label:'そうは思わない',score:1,color:'#C4C8D4'}];
+var CONF_OPTS=[{label:'把握できている',value:'yes'},{label:'あまり把握できていない',value:'no'}];
+
+var TYPE_BASE={
+  good:{name:'好循環型',emoji:'🟢',color:'#27AE60',bg:'#E8F8F0'},
+  gap:{name:'伝達ギャップ型',emoji:'🟡',color:'#F2994A',bg:'#FFF4E5'},
+  self:{name:'自走型',emoji:'🔵',color:'#2D9CDB',bg:'#E5F3FD'},
+  rebuild:{name:'立て直し型',emoji:'🟠',color:'#EB5757',bg:'#FDECEC'}
+};
+
+var CAT_INFO={
+  A:{label:'伝える',sub:'仕事の目的・背景の共有',color:'#2D9CDB',aruaru:'「ちゃんと教えたのに、なぜできない？」'},
+  B:{label:'引き出す',sub:'自律的に動ける環境づくり',color:'#27AE60',aruaru:'「いつでも聞いていいよ」問題'},
+  C:{label:'FB',sub:'具体的なフィードバック',color:'#F2994A',aruaru:'「褒めているのに響かない」問題'},
+  D:{label:'関係構築',sub:'安心して相談できる関係づくり',color:'#9B51E0',aruaru:'「前にも言ったよね」問題'}
+};
+
+function getTypeComments(key,g1,g2){
+  switch(key){
+    case'good':return(g1>=16&&g2>=16)?{desc:'教える側の指導が機能し、教わる側も成長を実感できている好循環の状態です。',advice:'この状態を維持するために、定期的に教わる側の声を確認し、認識のズレが生じていないかチェックすることが大切です。'}:{desc:'教える側の指導と教わる側の成長実感がおおむね噛み合っている状態です。ただし、まだ伸びしろがあります。',advice:'スコアが相対的に低いカテゴリに注目し、そこから改善を始めると、好循環がさらに強まります。'};
+    case'gap':return(g1>=16)?{desc:'教える側は積極的に指導しているのに、教わる側に十分伝わっていない状態です。',advice:'「教えたはずなのに、なぜできない？」という現場の典型的な問題です。教え方ではなく、教える側と教わる側の「認識のズレ」に原因がある可能性が高いです。'}:{desc:'教える側は指導に取り組んでいるものの、教わる側には十分に届いていない状態です。',advice:'指導の「量」は足りている一方で、伝え方や関わり方に改善の余地があるかもしれません。教わる側がどう受け止めているかを確認することが第一歩です。'};
+    case'self':return(g2>=16)?{desc:'教わる側が自力で成長している一方、教える側の指導体制が追いついていない状態です。',advice:'新人の自主性に依存しており、指導の質を底上げしないと、次の新人が同じように育つとは限りません。'}:{desc:'教わる側はある程度自分で成長できていますが、教える側からの支援が不足気味の状態です。',advice:'今は自力で何とかなっていても、業務が高度になるにつれ指導の不足が顕在化する可能性があります。教える側の関わり方を見直すタイミングです。'};
+    case'rebuild':return(g1>=9&&g2>=9)?{desc:'教える側の指導にも教わる側の成長実感にも課題がある状態ですが、改善の手がかりはあります。',advice:'課題を認識できていること自体が改善の出発点です。まず教わる側の声を聞いて実態を把握し、優先度の高いカテゴリから着手していくことを推奨します。'}:{desc:'教える側の指導体制と教わる側の成長実感の両方に大きな課題がある状態です。',advice:'まず教わる側が「わからない」「困っている」と言える関係づくり（カテゴリD）から始めることが最優先です。土台がないままスキル研修をしても効果は限定的です。'};
+    default:return{desc:'',advice:''};
+  }
+}
+
+// === STATE ===
+var role=null,currentQ=0,answers={},confidence={},confStep=0,animDir='forward';
+
+// === SCREEN MANAGEMENT ===
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('screen-'+id).classList.add('active');
+  if(id==='question')renderQuestion();
+  if(id==='confidence'){confStep=0;renderConfidence()}
+  if(id==='result')renderResult();
+}
+
+// === ROLE ===
+function selectRole(r){role=r;currentQ=0;answers={};confidence={};showScreen('question')}
+
+// === QUESTION ===
+function renderQuestion(){
+  var q=QUESTIONS[currentQ];
+  var pct=Math.round((currentQ+1)/8*100);
+  document.getElementById('q-counter').textContent=(currentQ+1)+' / 8';
+  document.getElementById('q-pct').textContent=pct+'%';
+  document.getElementById('q-progress').style.width=pct+'%';
+  var pill=document.getElementById('q-group-pill');
+  pill.textContent=q.group===1?'教える側の指導について':'教わる側の状態について';
+  pill.style.background=q.group===1?'#2D9CDB':'#27AE60';
+  var tEl=document.getElementById('q-text');
+  tEl.textContent=q.text;
+  tEl.style.animation='none';tEl.offsetHeight;
+  tEl.style.animation=(animDir==='forward'?'slideInRight':'slideInLeft')+' .3s ease';
+  var box=document.getElementById('q-choices');
+  box.innerHTML='';
+  ANSWER_OPTS.forEach(function(opt){
+    var b=document.createElement('button');
+    b.className='btn choice-btn';
+    b.textContent=opt.label;
+    var sel=answers[q.id]===opt.score;
+    b.style.color=sel?'#fff':'#555';
+    b.style.background=sel?opt.color:'#FAFBFC';
+    b.style.borderColor=sel?opt.color:'#E8EAF0';
+    b.onclick=function(){
+      answers[q.id]=opt.score;
+      setTimeout(function(){
+        if(currentQ<7){animDir='forward';currentQ++;renderQuestion()}
+        else{showScreen('confidence')}
+      },200);
+    };
+    box.appendChild(b);
+  });
+  document.getElementById('q-back').style.display=currentQ>0?'block':'none';
+}
+function goBack(){if(currentQ>0){animDir='back';currentQ--;renderQuestion()}}
+
+// === CONFIDENCE ===
+function renderConfidence(){
+  var cqs=role==='trainer'?[CONF_QUESTIONS[1]]:CONF_QUESTIONS;
+  if(confStep>=cqs.length)return;
+  var cq=cqs[confStep];
+  var base=role==='trainer'?9:8;
+  var total=10;
+  var cur=base+confStep;
+  var pct=Math.round((cur+1)/total*100);
+  document.getElementById('c-counter').textContent=(cur+1)+' / '+total;
+  document.getElementById('c-pct').textContent=pct+'%';
+  document.getElementById('c-progress').style.width=pct+'%';
+  var tEl=document.getElementById('c-text');
+  tEl.textContent=cq.text;
+  tEl.style.animation='none';tEl.offsetHeight;
+  tEl.style.animation='slideInRight .3s ease';
+  var box=document.getElementById('c-choices');
+  box.innerHTML='';
+  CONF_OPTS.forEach(function(opt){
+    var b=document.createElement('button');
+    b.className='btn choice-btn';
+    b.textContent=opt.label;
+    b.onmouseenter=function(){b.style.borderColor='#9B51E0';b.style.background='#F8F0FF'};
+    b.onmouseleave=function(){b.style.borderColor='#E8EAF0';b.style.background='#FAFBFC'};
+    b.onclick=function(){
+      confidence[cq.id]=opt.value;
+      var cqs2=role==='trainer'?[CONF_QUESTIONS[1]]:CONF_QUESTIONS;
+      if(confStep<cqs2.length-1){confStep++;renderConfidence()}
+      else{
+        if(role==='trainer')confidence[9]='yes';
+        sendData();
+        showScreen('result');
+      }
+    };
+    box.appendChild(b);
+  });
+}
+
+// === RESULT ===
+function renderResult(){
+  var g1=0,g2=0;
+  QUESTIONS.forEach(function(q){
+    var s=answers[q.id]||0;
+    if(q.group===1)g1+=s;else g2+=s;
+  });
+  var typeKey=(g1>=13&&g2>=13)?'good':(g1>=13&&g2<13)?'gap':(g1<13&&g2>=13)?'self':'rebuild';
+  var type=TYPE_BASE[typeKey];
+  var comments=getTypeComments(typeKey,g1,g2);
+  var confTeach=confidence[9]||'yes';
+  var confLearn=confidence[10]||'yes';
+
+  // Gap analysis
+  var cats=['A','B','C','D'];
+  var gaps=cats.map(function(c){
+    var tQ=QUESTIONS.find(function(q){return q.group===1&&q.cat===c});
+    var lQ=QUESTIONS.find(function(q){return q.group===2&&q.cat===c});
+    return{cat:c,teach:answers[tQ.id]||0,learn:answers[lQ.id]||0,gap:Math.abs((answers[tQ.id]||0)-(answers[lQ.id]||0))};
+  });
+  var maxAbsGap=Math.max.apply(null,gaps.map(function(g){return g.gap}));
+  var maxGapCats=gaps.filter(function(g){return g.gap===maxAbsGap&&maxAbsGap>0}).map(function(g){return g.cat});
+
+  var h='';
+  // Header
+  h+='<div style="text-align:center;margin-bottom:24px">';
+  h+='<div style="font-size:13px;color:#8B8FA3;margin-bottom:8px">あなたの診断結果</div>';
+  h+='<div style="font-size:48px;margin-bottom:8px">'+type.emoji+'</div>';
+  h+='<div style="font-size:24px;font-weight:800;color:'+type.color+'">'+type.name+'</div>';
+  h+='</div>';
+  // Scores
+  h+='<div class="result-scores">';
+  h+='<div class="score-card" style="background:#F0F8FF"><div style="font-size:11px;color:#2D9CDB;font-weight:600;margin-bottom:4px">教える側の指導</div><div style="font-size:24px;font-weight:800;color:#1A1D26">'+g1+'<span style="font-size:13px;color:#8B8FA3">/20</span></div></div>';
+  h+='<div class="score-card" style="background:#E8F8F0"><div style="font-size:11px;color:#27AE60;font-weight:600;margin-bottom:4px">教わる側の成長実感</div><div style="font-size:24px;font-weight:800;color:#1A1D26">'+g2+'<span style="font-size:13px;color:#8B8FA3">/20</span></div></div>';
+  h+='</div>';
+  // Description
+  h+='<div style="background:'+type.bg+';border-radius:12px;padding:16px 18px;margin-bottom:12px"><div style="font-size:14px;line-height:1.8;color:#333">'+comments.desc+'</div></div>';
+  h+='<div style="padding:12px 18px;margin-bottom:20px;font-size:13px;line-height:1.7;color:#555;background:#FAFBFC;border-radius:12px">💡 '+comments.advice+'</div>';
+
+  // Confidence visual
+  if(confTeach==='no'||confLearn==='no'){
+    h+='<div style="padding:16px;background:#FFF8E1;border-radius:12px;margin-bottom:20px">';
+    h+='<div style="font-size:13px;font-weight:700;color:#E08A00;margin-bottom:12px">現場の実態をどこまで把握できていますか？</div>';
+    h+='<div style="display:flex;gap:10px">';
+    // Teach
+    var tBg=confTeach==='no'?'#FFF0E0':'#E8F8F0';
+    var tIcon=confTeach==='no'?'🔍':'✅';
+    var tColor=confTeach==='no'?'#C06000':'#1B8C4F';
+    var tText=confTeach==='no'?'把握できていない':'把握できている';
+    h+='<div class="conf-box" style="background:'+tBg+'"><div style="font-size:22px;margin-bottom:4px">'+tIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教える側の実態</div><div style="font-size:11px;color:'+tColor+';font-weight:600">'+tText+'</div></div>';
+    // Learn
+    var lBg=confLearn==='no'?'#FFF0E0':'#E8F8F0';
+    var lIcon=confLearn==='no'?'🔍':'✅';
+    var lColor=confLearn==='no'?'#C06000':'#1B8C4F';
+    var lText=confLearn==='no'?'把握できていない':'把握できている';
+    h+='<div class="conf-box" style="background:'+lBg+'"><div style="font-size:22px;margin-bottom:4px">'+lIcon+'</div><div style="font-size:12px;font-weight:600;color:#333;margin-bottom:2px">教わる側の実態</div><div style="font-size:11px;color:'+lColor+';font-weight:600">'+lText+'</div></div>';
+    h+='</div>';
+    // Summary
+    var summary=(confTeach==='no'&&confLearn==='no')?'両方とも実態を確認できていない状態です。まず現場の声を聞くことから始めましょう。':confTeach==='no'?'教える側の実態確認が優先です。指導場面を直接観察してみましょう。':'教わる側の実態確認が優先です。新人・若手の声を直接聞いてみましょう。';
+    h+='<div style="font-size:12px;color:#996300;margin-top:10px;line-height:1.6;text-align:center">'+summary+'</div>';
+    h+='</div>';
+  }
+
+  // Gap chart
+  h+='<div class="gap-section">';
+  h+='<div style="font-size:14px;font-weight:700;color:#333;margin-bottom:6px">カテゴリ別スコア</div>';
+  h+='<div style="font-size:12px;color:#8B8FA3;line-height:1.6;margin-bottom:16px">OJTに必要な4つのスキル領域ごとに、教える側と教わる側のスコアを比較しています。差が大きいほど「認識のズレ」が生じている可能性があります。</div>';
+
+  gaps.forEach(function(g){
+    var info=CAT_INFO[g.cat];
+    var isMax=maxGapCats.indexOf(g.cat)>=0;
+    h+='<div class="gap-cat">';
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">';
+    h+='<span style="font-size:11px;font-weight:700;color:'+info.color+';background:'+info.color+'18;padding:2px 8px;border-radius:4px">'+g.cat+'</span>';
+    h+='<span style="font-size:13px;color:#333;font-weight:600">'+info.label+'</span>';
+    if(isMax)h+='<span style="font-size:10px;color:#EB5757;font-weight:700;margin-left:auto">← 最大ギャップ</span>';
+    h+='</div>';
+    h+='<div style="font-size:11px;color:#999;margin-bottom:6px;padding-left:4px">'+info.sub+'</div>';
+    // Bars
+    h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">';
+    h+='<span style="font-size:10px;color:#8B8FA3;width:52px">教える側</span>';
+    h+='<div class="gap-bar-track"><div class="gap-bar-fill" style="width:'+((g.teach/5)*100)+'%;background:'+info.color+'"></div></div>';
+    h+='<span style="font-size:11px;font-weight:600;color:#333;width:16px;text-align:right">'+g.teach+'</span>';
+    h+='</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px">';
+    h+='<span style="font-size:10px;color:#8B8FA3;width:52px">教わる側</span>';
+    h+='<div class="gap-bar-track"><div class="gap-bar-fill" style="width:'+((g.learn/5)*100)+'%;background:'+info.color+'88"></div></div>';
+    h+='<span style="font-size:11px;font-weight:600;color:#333;width:16px;text-align:right">'+g.learn+'</span>';
+    h+='</div>';
+    h+='</div>';
+  });
+
+  // Aruaru for ALL max gap categories
+  if(maxGapCats.length>0){
+    maxGapCats.forEach(function(cat){
+      var info=CAT_INFO[cat];
+      h+='<div class="aruaru-card" style="background:'+info.color+'10;border-left-color:'+info.color+'">';
+      h+='<div style="font-size:12px;font-weight:700;color:'+info.color+';margin-bottom:4px">'+info.label+'のギャップに関する「あるある」</div>';
+      h+='<div style="font-size:13px;color:#555;line-height:1.6">'+info.aruaru+'</div>';
+      h+='<div style="font-size:11px;color:#999;margin-top:6px">'+info.sub+'の観点で、教える側と教わる側の認識にズレがある可能性があります。</div>';
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+
+  // Restart
+  h+='<button class="btn btn-ghost" onclick="restart()" style="margin-top:20px">もう一度診断する</button>';
+
+  document.getElementById('result-card').innerHTML=h;
+}
+
+// === GAS ===
+function sendData(){
+  if(!GAS_URL)return;
+  var g1=0,g2=0;
+  QUESTIONS.forEach(function(q){var s=answers[q.id]||0;if(q.group===1)g1+=s;else g2+=s});
+  var typeKey=(g1>=13&&g2>=13)?'good':(g1>=13&&g2<13)?'gap':(g1<13&&g2>=13)?'self':'rebuild';
+  var gaps=['A','B','C','D'].map(function(c){
+    var t=answers[QUESTIONS.find(function(q){return q.group===1&&q.cat===c}).id]||0;
+    var l=answers[QUESTIONS.find(function(q){return q.group===2&&q.cat===c}).id]||0;
+    return{cat:c,abs:Math.abs(t-l)};
+  });
+  var maxAbs=Math.max.apply(null,gaps.map(function(g){return g.abs}));
+  var maxCats=maxAbs===0?'none':gaps.filter(function(g){return g.abs===maxAbs}).map(function(g){return g.cat}).join(',');
+  var fd=new URLSearchParams();
+  fd.append('timestamp',new Date().toISOString());
+  fd.append('role',role);
+  fd.append('answers',QUESTIONS.map(function(q){return answers[q.id]||0}).join(','));
+  fd.append('group1Score',g1);
+  fd.append('group2Score',g2);
+  fd.append('resultType',TYPE_BASE[typeKey].name);
+  fd.append('maxGapCategory',maxCats);
+  fd.append('confidence_teach',confidence[9]||'');
+  fd.append('confidence_learn',confidence[10]||'');
+  fetch(GAS_URL,{method:'POST',body:fd}).catch(function(){});
+}
+
+function restart(){role=null;currentQ=0;answers={};confidence={};confStep=0;showScreen('start')}
+
+// === BG DOTS ===
+(function(){
+  var bg=document.getElementById('bg');
+  var dots=[
+    {s:180,t:10,l:5,c:'#2D9CDB22',d:12},{s:220,t:60,l:70,c:'#27AE6022',d:14},
+    {s:160,t:30,l:85,c:'#F2994A22',d:16},{s:200,t:75,l:20,c:'#9B51E022',d:18},
+    {s:140,t:15,l:50,c:'#2D9CDB18',d:20},{s:190,t:55,l:35,c:'#27AE6018',d:22}
+  ];
+  var css='';
+  dots.forEach(function(d,i){
+    var el=document.createElement('div');
+    el.className='bg-dot';
+    el.style.cssText='width:'+d.s+'px;height:'+d.s+'px;top:'+d.t+'%;left:'+d.l+'%;background:radial-gradient(circle,'+d.c+' 0%,transparent 70%);animation:bf'+i+' '+d.d+'s ease-in-out infinite';
+    bg.appendChild(el);
+    var dx=[20,-15,15,-10,25,-20][i];
+    var dy=[-15,20,10,-20,5,15][i];
+    css+='@keyframes bf'+i+'{0%,100%{transform:translate(0,0)}50%{transform:translate('+dx+'px,'+dy+'px)}}';
+  });
+  var sEl=document.createElement('style');
+  sEl.textContent=css;
+  document.head.appendChild(sEl);
+})();
+</script>
+</body>
+</html>
